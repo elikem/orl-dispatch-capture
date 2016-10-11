@@ -2,8 +2,16 @@ require 'open-uri'
 require 'crack'
 require 'nokogiri'
 require 'awesome_print'
+require 'active_support/all'
+require 'fileutils'
 
 class Capture
+  def parse_source_time(time)
+    # Example input `10/10/2016 14:25`
+    localtime = ActiveSupport::TimeZone["America/New_York"].parse(time)
+    utc_time = localtime.in_time_zone("UTC")
+  end
+
   def parse
     # Returns an array of hashes with incidents
     feed = 'http://www1.cityoforlando.net/opd/activecalls/'
@@ -12,7 +20,7 @@ class Capture
     calls = Crack::XML.parse(page.xpath('/html/body/calls').to_s)
 
     calls['calls']['call'].each do |call|
-      incidents << {'date' => call['date'], 'incident_number' => call['incident'], 'desc' => call['desc'].strip, 'location' => call['location'].strip, 'district' => call['district']}
+      incidents << {'date' => parse_source_time(call['date']), 'incident_number' => call['incident'], 'desc' => call['desc'].strip, 'location' => call['location'].strip, 'district' => call['district']}
     end
 
     incidents
@@ -31,7 +39,7 @@ class Capture
     incidents
   end
 
-  def to_file
+  def incidents_to_file
     # Write formatted incidents to files
     incidents = formatter
     filename = Time.now.utc.strftime('%Y-%M-%e_%H-%M-%S_UTC') + '.csv'
@@ -42,8 +50,15 @@ class Capture
   end
 
   def filepath
-    "#{File.dirname(__FILE__)}/incidents/"
+    # Filepath signature
+    # Year > Month > Day > Hour
+    # 2016 > 10 > 16 > 02
+
+    time = Time.now.utc
+    path = FileUtils.mkdir_p "#{File.dirname(__FILE__)}/incidents/#{time.year}/#{time.month}/#{time.day}/#{time.hour}/"
+
+    path.first
   end
 end
 
-Capture.new.to_file
+Capture.new.incidents_to_file
