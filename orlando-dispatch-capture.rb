@@ -7,8 +7,8 @@ require 'fileutils'
 
 class Capture
   def parse_source_time(time)
-    # Example input `10/10/2016 14:25`
-    localtime = ActiveSupport::TimeZone["America/New_York"].parse(time)
+    # Example input `10/15/2016 14:25`
+    localtime = ActiveSupport::TimeZone["America/New_York"].strptime(time, '%m/%d/%Y %H:%M')
     utc_time = localtime.in_time_zone("UTC")
   end
 
@@ -26,7 +26,7 @@ class Capture
     incidents
   end
 
-  def formatter
+  def formatted_incidents
     # Returns an array formatted for file output
     incidents = ['date, incident_number, desc, location, district']
 
@@ -41,8 +41,11 @@ class Capture
 
   def incidents_to_file
     # Write formatted incidents to files
-    incidents = formatter
-    filename = Time.now.utc.strftime('%Y-%M-%e_%H-%M-%S_UTC') + '.csv'
+    time = Time.now.utc
+    incidents = formatted_incidents
+    filename = "#{time.year}-#{time.month}-#{time.day}-#{time.hour}-#{time.min}-#{time.sec}-UTC" + '.csv'
+
+    puts filename
 
     File.open(filepath + filename, 'w') do |f|
       incidents.each {|line| f.puts line}
