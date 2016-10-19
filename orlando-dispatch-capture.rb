@@ -4,6 +4,7 @@ require 'nokogiri'
 require 'awesome_print'
 require 'active_support/all'
 require 'fileutils'
+require 's3_uploader'
 
 class Capture
   def parse_source_time(time)
@@ -60,8 +61,26 @@ class Capture
     time = Time.now.utc
     path = FileUtils.mkdir_p "#{File.dirname(__FILE__)}/incidents/#{time.year}/#{time.month}/#{time.day}/#{time.hour}/"
 
-    path.first
+    File.expand_path(path.first) + '/'
+  end
+
+  def s3path
+    time = Time.now.utc
+    path = "#{time.year}/#{time.month}/#{time.day}/#{time.hour}/"
+  end
+
+  # uploader.upload('/folder_path_to_upload', 's3_bucket_name', 's3_storage_path/')
+  def upload(folder_to_upload, s3_upload_path)
+    uploader = S3Uploader::Uploader.new({
+                                            :s3_key => ENV['AWS_KEY'],
+                                            :s3_secret => ENV['AWS_SECRET,'],
+                                            :destination_dir => 'orl-pol-dispatch/' + s3_upload_path,
+                                            :threads => 10
+                                        })
+
+    uploader.upload(folder_to_upload, 'emergency-dispatch')
   end
 end
 
-Capture.new.incidents_to_file
+# Capture.new.incidents_to_file
+# Capture.new.upload(Capture.new.filepath, Capture.new.s3path)
