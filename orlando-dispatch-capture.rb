@@ -5,6 +5,7 @@ require 'awesome_print'
 require 'active_support/all'
 require 'fileutils'
 require 's3_uploader'
+require './environment'
 
 class Capture
   def parse_source_time(time)
@@ -73,7 +74,7 @@ class Capture
   def upload(folder_to_upload, s3_upload_path)
     uploader = S3Uploader::Uploader.new({
                                             :s3_key => ENV['AWS_KEY'],
-                                            :s3_secret => ENV['AWS_SECRET,'],
+                                            :s3_secret => ENV['AWS_SECRET'],
                                             :destination_dir => 'orl-pol-dispatch/' + s3_upload_path,
                                             :threads => 10
                                         })
@@ -82,5 +83,5 @@ class Capture
   end
 end
 
-# Capture.new.incidents_to_file
-# Capture.new.upload(Capture.new.filepath, Capture.new.s3path)
+Capture.new.incidents_to_file
+Capture.new.upload(Capture.new.filepath, Capture.new.s3path)
